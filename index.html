@@ -4739,10 +4739,10 @@ addEventListener('keydown',e=>{if(typeof REBIND!='undefined'&&REBIND)return;cons
 //  - the newer copy of a slot wins (each save carries `at`, the time it was written)
 //  - cloud settings and sign-in live under their own key, kr3_cloud, apart from the save slots
 // The project URL and anon (publishable) key are safe to ship in a web page; row level security keeps each player's rows private.
-const CLOUD_DEFAULT={url:'',key:''};   // optionally fill these in so players never need to type them
+const CLOUD_DEFAULT={url:'https://aalleaxeeznzbtktpfwu.supabase.co',key:'sb_publishable_3SzEB0kU9RZwKs-rLrRFIA_NOwDcQNe'};   // the realm's own cloud: players never need to type these
 const CLD={cfg:null,busy:false,last:0,msg:'',pushT:null};
 function clLoad(){if(CLD.cfg)return CLD.cfg;let c={};try{c=JSON.parse(localStorage.getItem('kr3_cloud')||'{}')||{}}catch(e){}
- CLD.cfg=Object.assign({url:CLOUD_DEFAULT.url,key:CLOUD_DEFAULT.key,auto:1},c);return CLD.cfg}
+ CLD.cfg=Object.assign({url:CLOUD_DEFAULT.url,key:CLOUD_DEFAULT.key,auto:1},c);if(!CLD.cfg.url)CLD.cfg.url=CLOUD_DEFAULT.url;if(!CLD.cfg.key)CLD.cfg.key=CLOUD_DEFAULT.key;return CLD.cfg}
 function clSave(){try{localStorage.setItem('kr3_cloud',JSON.stringify(CLD.cfg))}catch(e){}}
 function clReady(){const c=clLoad();return!!(c.url&&c.key)}
 function clSigned(){const c=clLoad();return!!(c.session&&c.session.access_token)}
