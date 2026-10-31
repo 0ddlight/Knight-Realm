@@ -664,10 +664,23 @@ body.bcine #hud,body.bcine #ctl{opacity:0;pointer-events:none;transition:opacity
 #endbtn{position:fixed;left:0;right:0;bottom:calc(16vh + env(safe-area-inset-bottom));z-index:330;display:flex;justify-content:center;animation:tvSettle 1.4s ease-out both}
 #endbtn .btn{font-size:16px;padding:12px 22px;max-width:86vw}
 #fcskip{position:fixed;right:calc(16px + env(safe-area-inset-right));bottom:calc(18px + env(safe-area-inset-bottom));z-index:302;font:italic 600 14px Alegreya,Georgia,serif;color:#ffe8b0;opacity:0;transition:opacity .4s;pointer-events:none;text-shadow:0 1px 3px #000}
-/* big screens: larger panels, lesson dialog, notices and controls (the world itself is scaled by ZW in 41_final) */
-@media (min-width:1100px) and (min-height:700px){#panel .pw,#dlg,#story .sc,#toast,#zcard,#lvlup,#qeq,#endbtn,#fcskip{zoom:1.25}#hud,#topr{zoom:1.2}#btns,#joy{zoom:1.12}#panel .pw{max-height:calc((100vh - 32px)/1.25)!important;overflow-y:auto}}
-@media (min-width:1700px) and (min-height:950px){#panel .pw,#dlg,#story .sc,#toast,#zcard,#lvlup,#qeq,#endbtn{zoom:1.45}#hud,#topr{zoom:1.35}#panel .pw{max-height:calc((100vh - 32px)/1.45)!important}}
+/* interface size: --uiz is set by 42_view (screen size times the player's Interface size setting) */
+#hud,#topr,#dlg,#story .sc,#toast,#zcard,#lvlup,#qeq,#endbtn,#fcskip,#bossbar,#wave,#panel .pw{zoom:var(--uiz,1)}
+#panel .pw{max-height:calc((100vh - 32px)/var(--uiz,1))!important;overflow-y:auto}
+#btns,#joy,#bR{zoom:var(--btz,1)}
+/* keyboard and mouse: hide the touch controls that have keys, keep potions, the special and the spell/arrow button */
+body.pcmin #joy,body.pcmin #bA,body.pcmin #bD,body.pcmin #bR,body.pcmin #bL{display:none!important}
+/* one map is enough: the minimap opens the full map */
+#bMap{display:none!important}
 #bM .bmi{width:38px;height:38px;image-rendering:auto}
+/* mode cards: the picture sits inside the card's frame, flush with it, instead of painting over the border */
+.hub-card{padding:4px!important}
+.hub-cart{object-fit:cover;box-shadow:0 0 0 2px var(--iron)}
+#tbot.home .hub-card{align-items:stretch!important}
+#tbot.home .hub-cart{height:auto;align-self:center}
+#tbot.home .hub-cn{display:flex;flex-direction:column;justify-content:center;padding-left:14px}
+.hub-main{padding:5px!important}
+.hub-main .hub-art{display:block;box-shadow:0 0 0 2px var(--iron)}
 </style>
 </head>
 <body>
@@ -6274,8 +6287,8 @@ drawTitle=function(dt){TT+=dt;tbackTick();{const ha=document.querySelector('.hub
  if(CLS=='knight'||CLS=='archer'){const sx=w*.22,sy=gy-h*.07;g.save();g.globalCompositeOperation='lighter';for(let i=0;i<5;i++){const a=-.55+i*.26+Math.sin(TT*.15+i)*.03,L=Math.max(w,h);g.globalAlpha=.035+.02*Math.sin(TT*.5+i*1.7);g.fillStyle=C.sun;g.beginPath();g.moveTo(sx,sy);g.lineTo(sx+Math.cos(a-.05)*L,sy+Math.sin(a-.05)*L*.5);g.lineTo(sx+Math.cos(a+.05)*L,sy+Math.sin(a+.05)*L*.5);g.closePath();g.fill()}g.restore()}
  // windows lit in the landmark
  for(const[x,y,ww,hh]of TV.lit){const f=.75+.25*Math.sin(TT*3+x);g.globalAlpha=f;rr(x,y,ww,hh,CLS=='wizard'&&y>gy-h*.2?'#c77dff':'#ffc060');glow(x+ww/2,y+hh/2,ww*1.6,'#ffb050',.25*f);g.globalAlpha=1}
- // mist bands drifting across the ridges, faster in a gust
- for(let i=0;i<2;i++){const y=gy-h*(.035-i*.03),off=(TT*(6+i*4)*(1+gu*2))%(w+400);g.save();g.globalAlpha=.18-i*.05;for(let k=-1;k<3;k++){const x=k*(w+400)/2+off-200;const m=g.createRadialGradient(x,y,0,x,y,260);m.addColorStop(0,'rgba('+C.mist+',.9)');m.addColorStop(1,'rgba('+C.mist+',0)');g.fillStyle=m;g.fillRect(x-260,y-34,520,68)}g.restore()}
+ // mist bands drifting across the ridges, faster in a gust (the drift is accumulated, so a gust speeds it up smoothly instead of making it jump)
+ TV.mo=TV.mo||[0,0];for(let i=0;i<2;i++){TV.mo[i]=(TV.mo[i]+Math.min(dt,.05)*(6+i*4)*(1+gu*2))%(w+400);const y=gy-h*(.035-i*.03),off=TV.mo[i];g.save();g.globalAlpha=.18-i*.05;for(let k=-1;k<3;k++){const x=k*(w+400)/2+off-200;const m=g.createRadialGradient(x,y,0,x,y,260);m.addColorStop(0,'rgba('+C.mist+',.9)');m.addColorStop(1,'rgba('+C.mist+',0)');g.fillStyle=m;g.fillRect(x-260,y-34,520,68)}g.restore()}
  // birds cross now and then
  TV.bT-=dt;if(TV.bT<=0){tvBird(w,gy);TV.bT=9+Math.random()*10}
  for(let i=TV.birds.length-1;i>=0;i--){const b=TV.birds[i];b.x+=b.dir*b.sp*dt;b.p+=dt*8;if(b.x<-80||b.x>w+80){TV.birds.splice(i,1);continue}for(let k=0;k<b.n;k++){const x=b.x-b.dir*k*14,y=b.y+Math.abs(k-(b.n-1)/2)*7+Math.sin(TT*.8+k)*3,f=Math.sin(b.p+k)>0;g.fillStyle=C.bird;g.fillRect(x-1,y,3,2);g.fillRect(x-5,y+(f?-3:1),4,2);g.fillRect(x+2,y+(f?-3:1),4,2)}}
@@ -7835,6 +7848,56 @@ addEventListener('resize',()=>{try{resize()}catch(e){}});if(typeof cv!='undefine
 document.addEventListener('DOMContentLoaded',()=>{try{resize()}catch(e){}});
 // The prologue's Ogre Warlord is the first fight a new hero meets: a tenth less health, same blows.
 {const _of=ogreFight;ogreFight=function(o){const r=_of(o);try{o.max=Math.round(o.max*.9);o.hp=Math.min(o.hp,o.max)}catch(e){}return r}}
+
+// ===== VIEW AND INTERFACE SETTINGS (mainly for computers) =====
+//  - View distance: how much of the world fits on screen (scales WZOOM from 41_final)
+//  - Interface size: the vitals, menus, lesson dialog, notices, boss bar and the world's text plates
+//    (separate from Touch button size)
+//  - Hide touch controls: on a keyboard, hides the joystick, attack, dash, run and lock buttons; the potions,
+//    the special and the spell/arrow button stay because they show counts and cooldowns
+//  - the separate map button is gone: the minimap opens the map
+Object.assign(SET_DEF,{fov:1,uis:1,pcmin:0});
+for(const k of ['fov','uis','pcmin'])if(SET[k]==null)SET[k]=SET_DEF[k];
+// the interface grows a little on big screens by itself; the setting multiplies that
+function uiBase(){return Math.max(1,Math.min(1.5,Math.min(innerWidth/1000,innerHeight/620)))}
+function applyView(){if(!document.body)return;const r=document.documentElement.style,b=uiBase();r.setProperty('--uiz',(b*(SET.uis||1)).toFixed(3));r.setProperty('--btz',b.toFixed(3));
+ document.body.classList.toggle('pcmin',!!SET.pcmin)}
+{const _as=applySet;applySet=function(){const r=_as();try{applyView();resize()}catch(e){}return r}}
+// view distance: 1 is the default; 1.6 shows far more of the world, 0.6 brings it close
+{const _rs=resize;resize=function(){_rs();try{const f=Math.max(.6,Math.min(1.8,SET.fov||1));if(f!=1&&cv&&ctx){const d=Math.min(2,devicePixelRatio||1),z=Math.max(.55,Math.min(3,WZOOM/f));WZOOM=z;DPR=d*z;VW=innerWidth/z;VH=innerHeight/z;cv.width=Math.round(innerWidth*d);cv.height=Math.round(innerHeight*d);ctx.setTransform(DPR,0,0,DPR,0,0);ctx.imageSmoothingEnabled=false;lc.width=Math.ceil(VW/2);lc.height=Math.ceil(VH/2)}applyView()}catch(e){}}}
+// the world's text plates follow the interface size
+{const _bf=bubFlush;bubFlush=function(){const s=SET.uis||1;if(s==1||!BUBQ.length)return _bf();const q=BUBQ;BUBQ=[];if(MODE!='play'||!P)return;q.sort((a,b)=>Math.hypot(a.x-P.x,a.y-P.y)-Math.hypot(b.x-P.x,b.y-P.y));const kept=[];
+ ctx.save();for(const b of q){const sc=b.m.a*s,sx=b.m.a*b.x+b.m.e,sy=b.m.d*b.y+b.m.f,parts=b.s.split(' · '),len=Math.max(...parts.map(p=>p.length)),w=(len*7+30)*sc,h=(parts.length>1?40:28)*sc,R={x:sx-w/2,y:sy-h-4*sc,w,h};
+  if(kept.some(k=>R.x<k.x+k.w&&R.x+R.w>k.x&&R.y<k.y+k.h&&R.y+R.h>k.y))continue;kept.push(R);ctx.setTransform(b.m);ctx.translate(b.x,b.y);ctx.scale(s,s);ctx.translate(-b.x,-b.y);try{_bubDraw(b.x,b.y,b.s)}catch(e){}}ctx.restore()}}
+// the settings rows
+{const _os=openSettings;openSettings=function(back){const r=_os(back);try{const list=document.querySelector('#panel .stlist');if(!list)return r;
+ const row=(k,n,d,min,max,step,fmt)=>'<div class="strow"><span class="stn"><b>'+n+' <span class="vwv" id="vw_'+k+'">'+fmt(SET[k]??SET_DEF[k])+'</span></b><small>'+d+'</small></span><input type="range" class="vsl vw" min="'+min+'" max="'+max+'" step="'+step+'" value="'+(SET[k]??SET_DEF[k])+'" data-w="'+k+'"></div>';
+ const pct=v=>Math.round(v*100)+'%';
+ const box=document.createElement('div');box.innerHTML='<div class="sec" style="margin-top:6px">View and interface</div>'+
+  row('fov','View distance','How much of the world you see. Higher shows more around you',.6,1.8,.05,pct)+
+  row('uis','Interface size','Health bars, menus, dialogue, notices and the name plates in the world',.7,1.8,.05,pct)+
+  '<div class="strow"><span class="stn"><b>Hide touch controls</b><small>For keyboard and mouse: hides the joystick, attack, dash, run and lock buttons. Potions, the special and the spell or arrow button stay</small></span><button class="btn s'+(SET.pcmin?'':' g')+'" id="vwpc">'+(SET.pcmin?'On':'Off')+'</button></div>';
+ const bt=list.querySelector('#sbtn');const anchor=bt?bt.closest('.strow'):null;if(anchor)list.insertBefore(box,anchor);else list.append(box);
+ for(const el of box.querySelectorAll('input.vw')){const k=el.dataset.w;el.oninput=()=>{SET[k]=+el.value;const v=document.getElementById('vw_'+k);if(v)v.textContent=pct(SET[k]);applyView();if(k=='fov')resize()};el.onchange=()=>saveSet();el.onkeydown=e=>e.stopPropagation()}
+ $('vwpc').onclick=()=>{SET.pcmin=SET.pcmin?0:1;saveSet();openSettings(back)};
+ const lab=bt&&bt.closest('.strow').querySelector('b');if(lab)lab.textContent='Touch button size'}catch(e){console.warn(e)}return r}}
+// the prologue no longer points at a map button that is gone
+{const _ts=tutSteps;tutSteps=function(){return _ts().map(s=>s.say?{...s,say:s.say.replace('Tap the map button for','Tap the little map in the corner for')}:s)}}
+try{applyView()}catch(e){}addEventListener('resize',()=>{try{applyView()}catch(e){}});
+try{if(typeof cv!='undefined'&&cv)resize()}catch(e){}document.addEventListener('DOMContentLoaded',()=>{try{applyView();resize()}catch(e){}});
+
+// ---------- browser shortcuts on a keyboard ----------
+// Ctrl (and Alt, Cmd) combine with letters into browser shortcuts: Ctrl+W closes the tab and a page cannot stop
+// it. So these keys can no longer be bound; while playing, other Ctrl+letter shortcuts are held back; and leaving
+// the page mid-tale asks first (and saves).
+const KMODS=['control','alt','meta','os','altgraph'];
+{const _ok=onKeyDown;try{removeEventListener('keydown',_ok,true)}catch(x){}
+ onKeyDown=function(e){const k=(e.key||'').toLowerCase();
+  if(REBIND&&KMODS.includes(k)){e.preventDefault();e.stopPropagation();toast('The browser keeps '+(k=='control'?'Ctrl':k=='meta'||k=='os'?'Cmd':'Alt')+' for its own shortcuts (Ctrl+W closes the tab). Choose another key.');return}
+  if(MODE=='play'&&(e.ctrlKey||e.metaKey)&&k.length==1&&/[a-z]/.test(k)&&!['c','v','x','r','l','t','n','w','q'].includes(k))e.preventDefault();
+  return _ok(e)};addEventListener('keydown',onKeyDown,true)}
+addEventListener('beforeunload',e=>{if(MODE=='play'&&!ENDG){try{save()}catch(x){}e.preventDefault();e.returnValue=''}});
+{const _sg=startGame;startGame=function(...a){const r=_sg(...a);try{const bad=Object.keys(KB).filter(x=>KB[x].some(k=>KMODS.includes(k)));if(bad.length)setTimeout(()=>toast('Your '+KACT.find(z=>z[0]==bad[0])[1]+' key is Ctrl or Alt, which the browser also uses (Ctrl+W closes the tab). You can change it in Bindings.'),2500)}catch(x){}return r}}
 
 </script>
 
